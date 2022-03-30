@@ -1,0 +1,321 @@
+1) List all the columns of the Salespeople table.
+
+mysql> SELECT * FROM salespeople;
++------+---------+-----------+------+
+| SNUM | SNAME   | CITY      | COMM |
++------+---------+-----------+------+
+| 1001 | Peel    | London    |   12 |
+| 1002 | Serres  | SanJose   |   13 |
+| 1003 | AxelRod | New York  |   10 |
+| 1004 | Motika  | London    |   11 |
+| 1007 | Rifkin  | Barcelona |   15 |
+| 1008 | Fran    | London    |   25 |
++------+---------+-----------+------+
+
+2) List all customers with a rating of 100.
+
+mysql> SELECT * FROM customers WHERE RATING=100;
++------+---------+--------+--------+------+
+| CNUM | CNAME   | CITY   | Rating | SNUM |
++------+---------+--------+--------+------+
+| 2001 | Hoffman | London |    100 | 1001 |
+| 2006 | Clemens | London |    100 | 1001 |
+| 2007 | Pereira | Rome   |    100 | 1004 |
++------+---------+--------+--------+------+
+
+3) Find the largest order taken by each salesperson on each date.
+
+mysql> SELECT SNAME, ODATE, ONUM, AMT
+    -> FROM salespeople, orders
+    -> WHERE salespeople.SNUM = orders.SNUM
+    -> AND AMT IN (SELECT MAX(AMT) FROM orders GROUP BY ODATE);
++---------+------------+------+---------+
+| SNAME   | ODATE      | ONUM | AMT     |
++---------+------------+------+---------+
+| Serres  | 1990-03-10 | 3005 | 5160.45 |
+| Peel    | 1990-05-10 | 3008 |    4723 |
+| AxelRod | 1990-04-10 | 3009 | 1713.23 |
+| Peel    | 1990-06-10 | 3011 | 9891.88 |
++---------+------------+------+---------+
+
+4) Arrange the Order table by descending customer number.
+
+mysql> SELECT * FROM orders
+    -> ORDER BY CNUM DESC;
++------+---------+------------+------+------+
+| ONUM | AMT     | ODATE      | CNUM | SNUM |
++------+---------+------------+------+------+
+| 3001 |   18.69 | 1990-03-10 | 2008 | 1007 |
+| 3006 | 1098.16 | 1990-03-10 | 2008 | 1007 |
+| 3002 |  1900.1 | 1990-03-10 | 2007 | 1004 |
+| 3008 |    4723 | 1990-05-10 | 2006 | 1001 |
+| 3011 | 9891.88 | 1990-06-10 | 2006 | 1001 |
+| 3007 |   75.75 | 1990-04-10 | 2004 | 1002 |
+| 3010 | 1309.95 | 1990-06-10 | 2004 | 1002 |
+| 3005 | 5160.45 | 1990-03-10 | 2003 | 1002 |
+| 3009 | 1713.23 | 1990-04-10 | 2002 | 1003 |
+| 3003 |  767.19 | 1990-03-10 | 2001 | 1001 |
++------+---------+------------+------+------+
+
+5) Find which salespeople currently have orders in the order table.
+
+mysql> SELECT orders.SNUM,salespeople.SNAME FROM orders,salespeople
+    -> WHERE orders.SNUM = salespeople.SNUM
+    -> GROUP BY SNUM
+    -> ORDER BY SNUM;
++------+---------+
+| SNUM | SNAME   |
++------+---------+
+| 1001 | Peel    |
+| 1002 | Serres  |
+| 1003 | AxelRod |
+| 1004 | Motika  |
+| 1007 | Rifkin  |
++------+---------+
+
+6) List names of all customers matched with the salespeople serving them.
+
+mysql> SELECT CNAME AS "Customer's Name", salespeople.SNAME AS "Serving By" FROM customers, salespeople
+    -> WHERE customers.SNUM = salespeople.SNUM;
++-----------------+------------+
+| Customer's Name | Serving By |
++-----------------+------------+
+| Hoffman         | Peel       |
+| Giovanni        | AxelRod    |
+| Lui             | Serres     |
+| Grass           | Serres     |
+| Clemens         | Peel       |
+| Pereira         | Motika     |
+| Cisneros        | Rifkin     |
++-----------------+------------+
+
+7) Find the names and numbers of all salespeople who have more than one customer.
+
+
+8) Count the orders of each of the salespeople and output the results in descending order.
+
+mysql> SELECT salespeople.SNUM, salespeople.SNAME,COUNT(orders.ONUM) AS No_of_Orders
+    -> FROM salespeople,orders
+    -> WHERE salespeople.SNUM = orders.SNUM
+    -> GROUP BY SNUM
+    -> ORDER BY No_of_Orders DESC;
++------+---------+--------------+
+| SNUM | SNAME   | No_of_Orders |
++------+---------+--------------+
+| 1001 | Peel    |            3 |
+| 1002 | Serres  |            3 |
+| 1007 | Rifkin  |            2 |
+| 1004 | Motika  |            1 |
+| 1003 | AxelRod |            1 |
++------+---------+--------------+
+
+9) List the customer table if and only if one or more of the customers in the Customer table are located in SanJose.
+
+mysql> SELECT * FROM customers
+    -> WHERE (SELECT COUNT(CITY) FROM customers
+    ->          WHERE CITY = "SanJose")>=1;
++------+----------+---------+--------+------+
+| CNUM | CNAME    | CITY    | Rating | SNUM |
++------+----------+---------+--------+------+
+| 2001 | Hoffman  | London  |    100 | 1001 |
+| 2002 | Giovanni | Rome    |    200 | 1003 |
+| 2003 | Lui      | SanJose |    200 | 1002 |
+| 2004 | Grass    | Berlin  |    300 | 1002 |
+| 2006 | Clemens  | London  |    100 | 1001 |
+| 2007 | Pereira  | Rome    |    100 | 1004 |
+| 2008 | Cisneros | SanJose |    300 | 1007 |
++------+----------+---------+--------+------+
+
+10) Match salespeople to customers according to what city they live in.
+
+mysql> SELECT salespeople.SNAME,customers.CNAME,customers.CITY
+    -> FROM salespeople,customers
+    -> WHERE customers.CITY = salespeople.CITY;
++--------+----------+---------+
+| SNAME  | CNAME    | CITY    |
++--------+----------+---------+
+| Fran   | Hoffman  | London  |
+| Motika | Hoffman  | London  |
+| Peel   | Hoffman  | London  |
+| Serres | Lui      | SanJose |
+| Fran   | Clemens  | London  |
+| Motika | Clemens  | London  |
+| Peel   | Clemens  | London  |
+| Serres | Cisneros | SanJose |
++--------+----------+---------+
+
+11) Find all the customers in SanJose who have a rating above 200.
+
+mysql> SELECT * FROM customers
+    -> WHERE CITY = "SanJose"
+    -> AND RATING>200;
++------+----------+---------+--------+------+
+| CNUM | CNAME    | CITY    | Rating | SNUM |
++------+----------+---------+--------+------+
+| 2008 | Cisneros | SanJose |    300 | 1007 |
++------+----------+---------+--------+------+
+
+12) List the names and commissions of all salespeople in London.
+
+mysql> SELECT SNAME,COMM FROM salespeople
+    -> WHERE CITY = "London";
++--------+------+
+| SNAME  | COMM |
++--------+------+
+| Peel   |   12 |
+| Motika |   11 |
+| Fran   |   25 |
++--------+------+
+
+13) List all the orders of Salesperson Motika from the orders table.
+
+mysql> SELECT * FROM orders
+    -> WHERE SNUM = 1004;
++------+--------+------------+------+------+
+| ONUM | AMT    | ODATE      | CNUM | SNUM |
++------+--------+------------+------+------+
+| 3002 | 1900.1 | 1990-03-10 | 2007 | 1004 |
++------+--------+------------+------+------+
+
+14) Find all customers who booked orders on October 3.
+
+mysql> SELECT * FROM customers
+    -> WHERE CNUM IN (SELECT CNUM FROM orders
+    ->                  WHERE ODATE = "1990-03-10");
++------+----------+---------+--------+------+
+| CNUM | CNAME    | CITY    | Rating | SNUM |
++------+----------+---------+--------+------+
+| 2008 | Cisneros | SanJose |    300 | 1007 |
+| 2007 | Pereira  | Rome    |    100 | 1004 |
+| 2001 | Hoffman  | London  |    100 | 1001 |
+| 2003 | Lui      | SanJose |    200 | 1002 |
++------+----------+---------+--------+------+
+
+15) Give the sums of the amounts from the Orders table, grouped by date, eliminating all those dates where 
+	the SUM was not at least 2000 above the maximum Amount
+
+
+16) Select all orders that had amounts that were greater than at least one of the orders from October 6.
+
+mysql> SELECT * FROM orders
+    -> WHERE AMT > ANY (SELECT AMT FROM orders
+    ->                  WHERE ODATE = "1990-06-10");
++------+---------+------------+------+------+
+| ONUM | AMT     | ODATE      | CNUM | SNUM |
++------+---------+------------+------+------+
+| 3002 |  1900.1 | 1990-03-10 | 2007 | 1004 |
+| 3005 | 5160.45 | 1990-03-10 | 2003 | 1002 |
+| 3008 |    4723 | 1990-05-10 | 2006 | 1001 |
+| 3009 | 1713.23 | 1990-04-10 | 2002 | 1003 |
+| 3011 | 9891.88 | 1990-06-10 | 2006 | 1001 |
++------+---------+------------+------+------+
+
+17) Write a query that uses the EXISTS operator to extract all salespeople who have customers with a rating of 300.
+
+mysql> SELECT * FROM salespeople
+    -> WHERE EXISTS (SELECT * FROM customers
+    ->                  WHERE RATING = 300
+    ->                  AND salespeople.SNUM = customers.SNUM);
++------+--------+-----------+------+
+| SNUM | SNAME  | CITY      | COMM |
++------+--------+-----------+------+
+| 1002 | Serres | SanJose   |   13 |
+| 1007 | Rifkin | Barcelona |   15 |
++------+--------+-----------+------+
+
+18) Find all customers whose cnum is 1000 above the snum of Serres
+
+mysql> SELECT * FROM customers
+    -> WHERE CNUM > (SELECT SNUM+1000 FROM salespeople
+    ->                  WHERE SNUM = 1002);
++------+----------+---------+--------+------+
+| CNUM | CNAME    | CITY    | Rating | SNUM |
++------+----------+---------+--------+------+
+| 2003 | Lui      | SanJose |    200 | 1002 |
+| 2004 | Grass    | Berlin  |    300 | 1002 |
+| 2006 | Clemens  | London  |    100 | 1001 |
+| 2007 | Pereira  | Rome    |    100 | 1004 |
+| 2008 | Cisneros | SanJose |    300 | 1007 |
++------+----------+---------+--------+------+
+
+19) Give the salespeople’s commissions as percentages instead of decimal numbers.
+
+mysql> SELECT SNUM,SNAME,CONVERT(COMM,char)+'%' AS COMMISSION
+    -> FROM salespeople;
++------+---------+------------+
+| SNUM | SNAME   | COMMISSION |
++------+---------+------------+
+| 1001 | Peel    |         12 |
+| 1002 | Serres  |         13 |
+| 1003 | AxelRod |         10 |
+| 1004 | Motika  |         11 |
+| 1007 | Rifkin  |         15 |
+| 1008 | Fran    |         25 |
++------+---------+------------+
+
+20) Find the largest order taken by each salesperson on each date, eliminating those Maximum orders, which are less than 3000.
+
+mysql> SELECT SNAME, ODATE, ONUM, AMT
+    -> FROM salespeople, orders
+    -> WHERE salespeople.SNUM = orders.SNUM
+    -> AND AMT IN (SELECT MAX(AMT) FROM orders GROUP BY ODATE)
+    -> AND AMT >= 3000;
++--------+------------+------+---------+
+| SNAME  | ODATE      | ONUM | AMT     |
++--------+------------+------+---------+
+| Serres | 1990-03-10 | 3005 | 5160.45 |
+| Peel   | 1990-05-10 | 3008 |    4723 |
+| Peel   | 1990-06-10 | 3011 | 9891.88 |
++--------+------------+------+---------+
+
+21) List all the largest orders for October 3, for each salesperson.
+
+mysql> SELECT salespeople.SNUM, SNAME, ONUM, MAX(AMT) AS MX_AMT, ODATE
+    -> FROM orders,salespeople
+    -> WHERE salespeople.SNUM = orders.SNUM
+    -> AND ODATE = "1990-03-10"
+    -> GROUP BY orders.SNUM;
++------+--------+------+---------+------------+
+| SNUM | SNAME  | ONUM | MX_AMT  | ODATE      |
++------+--------+------+---------+------------+
+| 1007 | Rifkin | 3001 | 1098.16 | 1990-03-10 |
+| 1004 | Motika | 3002 |  1900.1 | 1990-03-10 |
+| 1001 | Peel   | 3003 |  767.19 | 1990-03-10 |
+| 1002 | Serres | 3005 | 5160.45 | 1990-03-10 |
++------+--------+------+---------+------------+
+
+22) Find all customers located in cities where Serres has customers.
+
+mysql> SELECT * FROM customers
+    -> WHERE CITY = ANY(SELECT CITY FROM customers
+    ->                   WHERE SNUM = 1002);
++------+----------+---------+--------+------+
+| CNUM | CNAME    | CITY    | Rating | SNUM |
++------+----------+---------+--------+------+
+| 2003 | Lui      | SanJose |    200 | 1002 |
+| 2004 | Grass    | Berlin  |    300 | 1002 |
+| 2008 | Cisneros | SanJose |    300 | 1007 |
++------+----------+---------+--------+------+
+
+23) Select all customers with a rating above 200.
+
+mysql> SELECT * FROM customers
+    -> WHERE RATING > 200;
++------+----------+---------+--------+------+
+| CNUM | CNAME    | CITY    | Rating | SNUM |
++------+----------+---------+--------+------+
+| 2004 | Grass    | Berlin  |    300 | 1002 |
+| 2008 | Cisneros | SanJose |    300 | 1007 |
++------+----------+---------+--------+------+
+
+24) Count the number of salespeople currently having orders in the orders table.
+
+mysql> SELECT COUNT(DISTINCT SNUM) AS COUNT_sp FROM orders;
++----------+
+| COUNT_sp |
++----------+
+|        5 |
++----------+
+
+25) Write a query that produces all customers serviced by salespeople with a commission above 12%. Output the customer’s name,
+salesperson’s name and the salesperson’s rate of commission.
